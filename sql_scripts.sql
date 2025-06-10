@@ -61,7 +61,48 @@ JOIN location l
 SELECT COUNT(*)  as infectious_fact_count FROM infectious_fact;
 
 #3)
+SELECT
+    l.entity,
+    l.code,
+    ROUND(AVG(f.number_rabies), 2) AS avg_rabies,
+    MIN(f.number_rabies) AS min_rabies,
+    MAX(f.number_rabies) AS max_rabies,
+    SUM(f.number_rabies) AS sum_rabies
+FROM infectious_fact f
+JOIN location l ON f.location_id = l.id
+WHERE f.number_rabies IS NOT NULL
+GROUP BY l.entity, l.code
+ORDER BY avg_rabies DESC
+LIMIT 10;
 
 #4)
+use pandemic;
+SELECT
+    year,
+    STR_TO_DATE(CONCAT(year, '-01-01'), '%Y-%m-%d') AS start_of_year,
+    CURRENT_DATE() AS cur_date,
+    TIMESTAMPDIFF(YEAR, STR_TO_DATE(CONCAT(year, '-01-01'), '%Y-%m-%d'), CURRENT_DATE()) AS year_diff
+FROM infectious_fact;
 
 #5)
+# function creation
+DROP FUNCTION IF EXISTS year_diff;
+
+DELIMITER //
+
+CREATE FUNCTION year_diff(input_year INT)
+RETURNS INT
+DETERMINISTIC
+BEGIN
+    DECLARE start_date DATE;
+    SET start_date = STR_TO_DATE(CONCAT(input_year, '-01-01'), '%Y-%m-%d');
+    RETURN TIMESTAMPDIFF(YEAR, start_date, CURRENT_DATE());
+END;
+//
+
+DELIMITER ;
+# function usage example
+SELECT
+    year,
+    year_diff(year) AS year_difference
+FROM infectious_fact;
